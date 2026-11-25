@@ -1,3 +1,8 @@
 name = "acd-academy"
 compatibility_date = "2025-01-01"
-pages_build_output_dir = "./dist"
+
+# Static site output from `astro build`. Lets Cloudflare's
+# `npx wrangler deploy` upload dist/ instead of looking for a Worker script.
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"
