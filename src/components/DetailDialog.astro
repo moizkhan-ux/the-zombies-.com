@@ -1,0 +1,64 @@
+---
+import { students, TRAITS } from "../data/students";
+import { teachersRanked } from "../data/teachers";
+---
+
+<dialog id="dlg" aria-label="Details"><div class="dlg" id="dlgBody"></div></dialog>
+
+<script type="application/json" id="site-data" set:html={JSON.stringify({ students, teachers: teachersRanked, traits: TRAITS })} />
+
+<script>
+  import { initials } from "../lib/utils";
+
+  const data = JSON.parse(document.getElementById("site-data")!.textContent!);
+  const dlg = document.getElementById("dlg") as HTMLDialogElement;
+  const dlgBody = document.getElementById("dlgBody")!;
+  let lastBtn: HTMLElement | null = null;
+
+  const esc = (t: unknown) =>
+    String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c as "&"]);
+
+  document.getElementById("cards")!.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>(".more");
+    if (!b || b.tagName === "A") return;
+    const s = data.students[Number(b.dataset.i)];
+    lastBtn = b;
+    dlgBody.innerHTML =
+      '<button type="button" class="x" aria-label="Close">&times;</button>' +
+      `<div class="top"><div class="avatar">${esc(initials(s.name))}</div><div><h3>${esc(s.name)}</h3><small>Roll no. ${esc(s.roll)}</small></div></div>` +
+      `<span class="best">Perfect at: ${esc(s.talent)}</span>` +
+      `<div class="facts"><div><b>#${s.rank}</b><span>Behaviour rank</span></div><div><b>${s.overall}%</b><span>Overall</span></div><div><b>${esc(s.rating)}</b><span>Rating</span></div></div>` +
+      `<div><h4>About ${esc(s.name)}</h4><p>${esc(s.about)}</p></div>` +
+      `<div><h4>Behaviour</h4>${data.traits
+        .map(
+          (t: string, k: number) =>
+            `<div class="skill"><span>${t}</span><div class="bar"><i style="width:${s.behaviour[k]}%"></i></div><em>${s.behaviour[k]}%</em></div>`
+        )
+        .join("")}<p style="margin-top:.6rem">${esc(s.bnote)}</p></div>` +
+      `<div class="imp"><h4>What to improve</h4><ul>${s.improve.map((t: string) => `<li>${esc(t)}</li>`).join("")}</ul></div>`;
+    dlg.showModal();
+  });
+
+  document.getElementById("teacherCards")!.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>(".more");
+    if (!b || b.tagName === "A") return;
+    const i = Number(b.dataset.t);
+    const t = data.teachers[i];
+    lastBtn = b;
+    const badge = i === 0 ? "Best teacher" : i < 3 ? `Top ${i + 1} teacher` : "";
+    dlgBody.innerHTML =
+      '<button type="button" class="x" aria-label="Close">&times;</button>' +
+      `<div class="top"><div class="avatar">${esc(initials(t.name))}</div><div><h3>${esc(t.name)}</h3><small>${esc(t.subject)} teacher</small></div></div>` +
+      (badge ? `<span class="best">${badge}</span>` : "") +
+      `<div class="facts"><div><b>#${i + 1}</b><span>Teacher rank</span></div><div><b>★ ${t.rating.toFixed(1)}</b><span>Rating out of 5</span></div><div><b>${esc(t.subject)}</b><span>Subject</span></div></div>` +
+      `<div><h4>About ${esc(t.name)}</h4><p>${esc(t.about)}</p></div>` +
+      `<div class="imp"><h4>What students love</h4><ul>${t.loved.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+    dlg.showModal();
+  });
+
+  dlg.addEventListener("click", (e) => {
+    const el = e.target as HTMLElement;
+    if (el === dlg || el.closest(".x")) dlg.close();
+  });
+  dlg.addEventListener("close", () => lastBtn?.focus());
+</script>

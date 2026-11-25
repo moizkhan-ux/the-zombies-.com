@@ -1,0 +1,24 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Hero from "../components/Hero.astro";
+import About from "../components/About.astro";
+import StudentCards from "../components/StudentCards.astro";
+import BehaviourTable from "../components/BehaviourTable.astro";
+import Teachers from "../components/Teachers.astro";
+import DetailDialog from "../components/DetailDialog.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout>
+  <Navbar />
+  <main id="top">
+    <Hero />
+    <About />
+    <StudentCards />
+    <BehaviourTable />
+    <Teachers />
+  </main>
+  <DetailDialog />
+  <Footer />
+</Layout>

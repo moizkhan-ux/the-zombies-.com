@@ -1,0 +1,136 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import Footer from "../../components/Footer.astro";
+import { teachersRanked } from "../../data/teachers";
+import { initials } from "../../lib/utils";
+
+const starPath = "M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3 6.2 20.4l1.1-6.5-4.7-4.6 6.5-.9L12 2.5z";
+const frac = (rating: number, i: number) => Math.min(1, Math.max(0, rating - i));
+const [best, ...rest] = teachersRanked;
+---
+
+<Layout title="Our teachers – The Zombies">
+  <Navbar />
+  <main>
+    <section>
+      <div class="wrap">
+        <header class="tpage-head">
+          <div class="cap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"></path><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"></path><path d="M22 10v6"></path></svg>
+          </div>
+          <h2>Our teachers</h2>
+          <p class="lead">The teachers who help us most, ranked by their rating out of 5.</p>
+        </header>
+
+        <nav class="tchips" aria-label="Jump to a teacher">
+          {
+            teachersRanked.map((t) => (
+              <a class="beh" href={`#${t.slug}`}>{t.subject}</a>
+            ))
+          }
+        </nav>
+
+        <article class="card tspot" id={best.slug}>
+          <div class="spot-l">
+            <span class="crown" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7.5L7.2 13 12 4.5 16.8 13 21 7.5V19H3V7.5z"></path></svg>
+            </span>
+            <div class="avatar">{initials(best.name)}</div>
+            <span class="best-lbl">BEST TEACHER</span>
+          </div>
+          <div class="spot-r">
+            <h3 class="pname">{best.name}</h3>
+            <span class="best">{best.subject}</span>
+            <div class="stars-row">
+              <span class="stars" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((n) => {
+                  const id = `star-${best.slug}-${n}`;
+                  const pct = `${(frac(best.rating, n) * 100).toFixed(2)}%`;
+                  return (
+                    <svg class="star-svg" viewBox="0 0 24 24">
+                      <defs>
+                        <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+                          <stop offset={pct} class="star-stop-on"></stop>
+                          <stop offset={pct} class="star-stop-off"></stop>
+                        </linearGradient>
+                      </defs>
+                      <path d={starPath} fill={`url(#${id})`}></path>
+                    </svg>
+                  );
+                })}
+              </span>
+            </div>
+            <div class="giant">
+              <b>{best.rating.toFixed(1)}</b>
+              <span>OUT OF 5</span>
+            </div>
+            <p class="tknow">{best.known}</p>
+            <a class="more" href={`/teachers/${best.slug}`}>Description</a>
+          </div>
+        </article>
+
+        <div class="tpg-grid">
+          {
+            rest.map((t, i) => {
+              const rank = i + 2;
+              return (
+                <article class="card tcard" id={t.slug}>
+                  <span class={`trb trb-${rank}`}>#{rank}</span>
+                  <div class="top">
+                    <div class="avatar">{initials(t.name)}</div>
+                    <div>
+                      <h3>{t.name}</h3>
+                      <span class="best">{t.subject}</span>
+                    </div>
+                  </div>
+                  <div class="stars-row">
+                    <span class="stars" aria-hidden="true">
+                      {[0, 1, 2, 3, 4].map((n) => {
+                        const id = `star-${t.slug}-${n}`;
+                        const pct = `${(frac(t.rating, n) * 100).toFixed(2)}%`;
+                        return (
+                          <svg class="star-svg" viewBox="0 0 24 24">
+                            <defs>
+                              <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+                                <stop offset={pct} class="star-stop-on"></stop>
+                                <stop offset={pct} class="star-stop-off"></stop>
+                              </linearGradient>
+                            </defs>
+                            <path d={starPath} fill={`url(#${id})`}></path>
+                          </svg>
+                        );
+                      })}
+                    </span>
+                    <strong>{t.rating.toFixed(1)} / 5</strong>
+                  </div>
+                  <p class="tknow">{t.known}</p>
+                  <a class="more" href={`/teachers/${t.slug}`}>Description</a>
+                </article>
+              );
+            })
+          }
+        </div>
+
+        <section class="card tboard" aria-labelledby="rating-board">
+          <h3 id="rating-board">Rating board</h3>
+          <ol>
+            {
+              teachersRanked.map((t) => (
+                <li>
+                  <a href={`/teachers/${t.slug}`}>
+                    <span class="avatar">{initials(t.name)}</span>
+                    <span class="nm">{t.name}</span>
+                    <span class="bar"><i style={`width:${(t.rating / 5) * 100}%`}></i></span>
+                    <strong>{t.rating.toFixed(1)}</strong>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </section>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

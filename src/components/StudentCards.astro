@@ -1,0 +1,38 @@
+---
+import { students } from "../data/students";
+import { initials } from "../lib/utils";
+---
+
+<section id="students">
+  <div class="wrap">
+    <h2>Our students</h2>
+    <p class="lead">Everyone in our class is perfect at something. Here is what.</p>
+    <div class="grid scards" id="cards">
+      {
+        students.map((s) => (
+          <article class="card">
+            <span class={`rbadge r${s.rank <= 3 ? s.rank : "x"}`}>#{s.rank}</span>
+            <div class="top">
+              <div class="avatar">{initials(s.name)}</div>
+              <div>
+                <span class="meet">MEET</span>
+                <h3>{s.name}</h3>
+                <small>Roll no. {s.roll}</small>
+              </div>
+            </div>
+            <div class="bstat">
+              <div class="bstat-top">
+                <span>Behaviour</span>
+                <strong>{s.overall}%</strong>
+              </div>
+              <div class="bar"><i style={`width:${s.overall}%`}></i></div>
+              <span class="beh">{s.rating}</span>
+            </div>
+            <p class="tagline">{s.tagline}</p>
+            <a class="more" href={`/students/${s.roll}`}>View details</a>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>

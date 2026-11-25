@@ -1,0 +1,236 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import { ranked } from "../data/students";
+import { initials } from "../lib/utils";
+
+const [first, second, third] = ranked;
+const podium = [
+  { s: first, place: 1 },
+  { s: second, place: 2 },
+  { s: third, place: 3 },
+];
+const rest = ranked.slice(3);
+---
+
+<Layout title="Leaderboard">
+  <Navbar />
+  <main>
+    <section>
+      <div class="wrap">
+        <h2 class="lb-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v6a5 5 0 01-10 0V4z"></path><path d="M7 6H4.5a2.5 2.5 0 002.5 4"></path><path d="M17 6h2.5a2.5 2.5 0 01-2.5 4"></path></svg>
+          Leaderboard
+        </h2>
+        <p class="lead">Ranked by overall behaviour score. Do your best in class!</p>
+
+        <div class="podium">
+          {
+            podium.map(({ s, place }) => (
+              <article class={`card p-card p${place}`}>
+                <span class="place">#{s.rank}</span>
+                <div class="ava-wrap">
+                  {s.gender === "boy" && (
+                    <span class="crown" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7.5L7.2 13 12 4.5 16.8 13 21 7.5V19H3V7.5z"></path></svg>
+                    </span>
+                  )}
+                  <div class="avatar">{initials(s.name)}</div>
+                </div>
+                <h3>{s.name}</h3>
+                <p class="pct">{s.overall}%</p>
+                <span class="beh">{s.rating}</span>
+                <span class="best">Perfect at: {s.talent}</span>
+                {s.gender === "girl" && (
+                  <span class="pookie">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21S5 16.2 2.8 12.2C1 9.6 1.7 5.8 5 4.4 7.2 3.4 9.6 4.2 12 6.8c2.4-2.6 4.8-3.4 7-2.4 3.3 1.4 4 5.2 2.2 7.8C19 16.2 12 21 12 21z"></path></svg>
+                    Pookie
+                  </span>
+                )}
+              </article>
+            ))
+          }
+        </div>
+
+        {
+          rest.length > 0 && (
+            <ol class="ranks">
+              {rest.map((s) => (
+                <li>
+                  <a class="row" href={`/students/${s.roll}`}>
+                    <span class="rk">#{s.rank}</span>
+                    <span class="avatar sm">{initials(s.name)}</span>
+                    <span class="who">
+                      <strong>{s.name}</strong>
+                      <span class="skill">
+                        <span class="bar"><i style={`width:${s.overall}%`}></i></span>
+                        <em>{s.overall}%</em>
+                      </span>
+                    </span>
+                    <span class="beh">{s.rating}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          )
+        }
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .lb-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .lead {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .lb-title svg {
+    width: 1.35em;
+    height: 1.35em;
+    flex: none;
+  }
+  .podium {
+    display: grid;
+    gap: 1.2rem;
+    grid-template-areas: "p1" "p2" "p3";
+    margin-bottom: 2.5rem;
+  }
+  .p1 { grid-area: p1; }
+  .p2 { grid-area: p2; }
+  .p3 { grid-area: p3; }
+  .p-card {
+    align-items: center;
+    text-align: center;
+  }
+  .p-card .best {
+    align-self: center;
+  }
+  .place {
+    font: 800 1.4rem var(--head);
+  }
+  .ava-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .crown {
+    color: var(--bar);
+    line-height: 0;
+  }
+  .crown svg {
+    width: 28px;
+    height: 28px;
+  }
+  .pct {
+    font: 800 1.35rem var(--head);
+    max-width: none;
+  }
+  .pookie {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 6px;
+  }
+  .pookie svg {
+    width: 14px;
+    height: 14px;
+  }
+  .p1 {
+    background: var(--brand);
+    color: var(--brand-ink);
+    box-shadow: 8px 8px 0 var(--accent);
+    border-color: transparent;
+    padding: 1.8rem 1.3rem 1.4rem;
+    gap: 0.85rem;
+  }
+  .p1 .avatar {
+    width: 72px;
+    height: 72px;
+    font-size: 1.5rem;
+  }
+  .p1 .crown {
+    color: var(--accent);
+  }
+  .p1 .beh {
+    border-color: var(--brand-ink);
+  }
+  .ranks {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 2.4rem 48px minmax(0, 1fr) auto;
+    gap: 0.75rem 1rem;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .row:hover {
+    border-color: var(--bar);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+  .rk {
+    font: 800 1rem var(--head);
+  }
+  .avatar.sm {
+    width: 44px;
+    height: 44px;
+    font-size: 0.95rem;
+  }
+  .who {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+  .who .skill {
+    grid-template-columns: 1fr 42px;
+  }
+  @media (min-width: 821px) {
+    .podium {
+      grid-template-columns: 1fr 1.2fr 1fr;
+      grid-template-areas: "p2 p1 p3";
+      align-items: end;
+    }
+  }
+  @media (max-width: 640px) {
+    .row {
+      grid-template-columns: 2rem 44px 1fr;
+    }
+    .row .beh {
+      grid-column: 3;
+      justify-self: start;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .row {
+      transition: none;
+    }
+    .row:hover {
+      transform: none;
+    }
+  }
+</style>

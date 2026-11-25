@@ -1,0 +1,31 @@
+---
+import { ranked } from "../data/students";
+---
+
+<section id="results" class="alt">
+  <div class="wrap">
+    <h2>Class behaviour</h2>
+    <p class="lead">Behaviour scores for the whole class, ranked from best to lowest overall score.</p>
+    <div class="tablewrap">
+      <table class="perf">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Roll no.</th><th>Name</th>
+            <th>Overall</th><th>Rating</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          {
+            ranked.map((s) => (
+              <tr>
+                <td>{s.rank}</td><td>{s.roll}</td><td>{s.name}</td>
+                <td><b>{s.overall}%</b></td>
+                <td><span class="beh">{s.rating}</span></td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

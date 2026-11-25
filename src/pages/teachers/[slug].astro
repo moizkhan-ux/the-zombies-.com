@@ -1,0 +1,94 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import Footer from "../../components/Footer.astro";
+import { teachersRanked, type Teacher } from "../../data/teachers";
+import { initials } from "../../lib/utils";
+
+export function getStaticPaths() {
+  return teachersRanked.map((teacher, i) => ({
+    params: { slug: teacher.slug },
+    props: { teacher, rank: i + 1 },
+  }));
+}
+
+interface Props {
+  teacher: Teacher;
+  rank: number;
+}
+
+const { teacher: t, rank } = Astro.props;
+const i = rank - 1;
+const badge = i === 0 ? "Best teacher" : i < 3 ? `Top ${i + 1} teacher` : "";
+const barPct = (t.rating / 5) * 100;
+const starPath = "M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3 6.2 20.4l1.1-6.5-4.7-4.6 6.5-.9L12 2.5z";
+const fill = (rating: number, n: number) => Math.min(100, Math.max(0, (rating - n) * 100));
+---
+
+<Layout title={`${t.name} – The Zombies`}>
+  <Navbar />
+  <main>
+    <section>
+      <div class="wrap">
+        <article class="card tplayer">
+          <div class="panel-l">
+            <div class="rank-mark">
+              <span class="rank-num">#{rank}</span>
+              <span class="rank-lbl">RANK</span>
+            </div>
+            <div class="avatar big">{initials(t.name)}</div>
+            <h1 class="pname">{t.name}</h1>
+            <small>{t.subject} teacher</small>
+            <div class="stars-row on-brand">
+              <span class="stars" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((n) => (
+                  <span class="star">
+                    <svg class="star-bg" viewBox="0 0 24 24"><path d={starPath}></path></svg>
+                    <span class="star-on" style={`width:${fill(t.rating, n)}%`}>
+                      <svg viewBox="0 0 24 24"><path d={starPath}></path></svg>
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </div>
+            <div class="giant">
+              <b>{t.rating.toFixed(1)}</b>
+              <span>OUT OF 5</span>
+            </div>
+          </div>
+          <div class="panel-r">
+            <div class="pills">
+              {badge && <span class="best">{badge}</span>}
+              <span class="beh">{t.subject}</span>
+            </div>
+            <div>
+              <h4>About {t.name}</h4>
+              <p>{t.about}</p>
+            </div>
+            <div>
+              <h4>Rating</h4>
+              <div class="skill stat">
+                <span>Score</span>
+                <div class="bar"><i style={`width:${barPct}%`}></i></div>
+                <em>{t.rating.toFixed(1)}</em>
+              </div>
+            </div>
+            <div>
+              <h4>What students love</h4>
+              <ul class="checks">
+                {t.loved.map((x) => (
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path></svg>
+                    {x}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <a class="btn back" href="/teachers">Back to teachers</a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

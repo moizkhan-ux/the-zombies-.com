@@ -1,0 +1,61 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import Footer from "../../components/Footer.astro";
+import { students, TRAITS } from "../../data/students";
+import { initials } from "../../lib/utils";
+---
+
+<Layout title="Our students – ACD Academy">
+  <Navbar />
+  <main>
+    <section>
+      <div class="wrap">
+        <h2>Our students</h2>
+        <div class="grid">
+          {
+            students.map((s) => (
+              <article class="card">
+                <div class="top">
+                  <div class="avatar">{initials(s.name)}</div>
+                  <div>
+                    <h3>{s.name}</h3>
+                    <small>Roll no. {s.roll}</small>
+                  </div>
+                </div>
+                <span class="best">Perfect at: {s.talent}</span>
+                {s.skills.map(([label, pct]) => (
+                  <div class="skill">
+                    <span>{label}</span>
+                    <div class="bar"><i style={`width:${pct}%`}></i></div>
+                    <em>{pct}%</em>
+                  </div>
+                ))}
+                {TRAITS.map((t, k) => (
+                  <div class="skill">
+                    <span>{t}</span>
+                    <div class="bar"><i style={`width:${s.behaviour[k]}%`}></i></div>
+                    <em>{s.behaviour[k]}%</em>
+                  </div>
+                ))}
+                <p class="note">{s.about}</p>
+                <a class="more" href={`/students/${s.roll}`}>Click here</a>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  a.more {
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+</style>
