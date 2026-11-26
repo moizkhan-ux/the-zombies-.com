@@ -1,0 +1,1001 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import GameLeaderboard from "../components/GameLeaderboard.astro";
+import { students } from "../data/students";
+import { initials } from "../lib/utils";
+import "../styles/arcade.css";
+
+const roster = students.map((s) => ({ name: s.name, initials: initials(s.name) }));
+---
+
+<Layout title="Whack-a-Zombie" description="Shoot the animal targets in 30 seconds. Beat the class high score.">
+  <Navbar />
+  <main class="arcade">
+    <div class="fx-bg" aria-hidden="true">
+      <span class="fog f1"></span>
+      <span class="fog f2"></span>
+      <span class="fog f3"></span>
+      {Array.from({ length: 10 }, (_, i) => <i class={`ember e${i + 1}`} />)}
+      <span class="vignette"></span>
+    </div>
+    <section class="arcade-hero">
+      <div class="wrap">
+        <p class="insert-coin">Arcade · Class 9</p>
+        <h1 class="marquee">WHACK-A-ZOMBIE</h1>
+        <p class="tag">Shoot the animals. Don't shoot the bombs. Beat your classmates.</p>
+      </div>
+    </section>
+    <section class="play-sec">
+      <div class="wrap">
+        <div class="cabinet" id="cabinet">
+          <div class="cab-top" aria-hidden="true"></div>
+          <div class="cab-bezel">
+            <div class="hud" aria-live="polite">
+              <div class="hud-cell" id="timeBox">
+                <span>Time</span>
+                <strong id="timeVal">30</strong>
+                <span class="time-track"><i id="timeBar"></i></span>
+              </div>
+              <div class="hud-cell score-box">
+                <span>Score</span>
+                <strong id="scoreVal">0</strong>
+                <b class="combo-pop" id="comboPop" hidden>COMBO x2!</b>
+              </div>
+              <div class="hud-cell">
+                <span>Player</span>
+                <strong id="playerVal">—</strong>
+              </div>
+            </div>
+            <div class="screen">
+              <form class="start-panel" id="setup" data-who="student">
+                <div class="who-toggle" role="tablist" aria-label="How to pick your name">
+                  <span class="who-slider" aria-hidden="true"></span>
+                  <button type="button" class="who-tab" role="tab" id="tabStudent" data-who="student" aria-selected="true" aria-controls="paneStudent">I'm a student</button>
+                  <button type="button" class="who-tab" role="tab" id="tabGuest" data-who="guest" aria-selected="false" aria-controls="paneGuest">Guest / Nickname</button>
+                </div>
+                <div class="who-pane" id="paneStudent" role="tabpanel" aria-labelledby="tabStudent">
+                  <label class="search-lab" for="studentSearch">Search your name...</label>
+                  <input id="studentSearch" type="search" placeholder="Search your name..." autocomplete="off" />
+                  <div class="pick-grid" id="pickGrid" role="listbox" aria-label="Students">
+                    {roster.map((s) => (
+                      <button type="button" class="pick-card" role="option" data-name={s.name} aria-selected="false">
+                        <span class="avatar pick-ava" aria-hidden="true">{s.initials}</span>
+                        <span class="pick-name">{s.name}</span>
+                        <span class="pick-check" aria-hidden="true">✓</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p class="pick-none" id="pickNone" hidden>No student matches that search.</p>
+                </div>
+                <div class="who-pane" id="paneGuest" role="tabpanel" aria-labelledby="tabGuest" hidden>
+                  <label class="search-lab" for="nickname">Nickname</label>
+                  <div class="nick-row">
+                    <input id="nickname" name="nickname" type="text" maxlength="20" autocomplete="nickname" placeholder="Type a cool nickname (max 20 letters)" />
+                    <button type="button" class="dice" id="randNick" aria-label="Random nickname" title="Random nickname">🎲</button>
+                  </div>
+                  <p class="nick-count" id="nickCount" aria-live="polite">0/20</p>
+                </div>
+                <p class="playing-as" id="nameHint">
+                  <span class="avatar playing-ava" id="playAva" aria-hidden="true">?</span>
+                  <span>Playing as: <strong id="playName">—</strong></span>
+                </p>
+                <div class="btns">
+                  <button type="submit" class="btn go-btn" id="startBtn" disabled>START</button>
+                  <button type="button" class="btn ghost" id="againBtn" hidden>Play Again</button>
+                </div>
+                <ul class="howto">
+                  <li><span aria-hidden="true">🎯</span> Shoot targets</li>
+                  <li><span aria-hidden="true">💣</span> Avoid bombs</li>
+                  <li><span aria-hidden="true">🔥</span> Build combos</li>
+                </ul>
+              </form>
+              <div class="arena" id="arena">
+                <div class="count-ov" id="countOv" hidden></div>
+                <button type="button" class="mute" id="muteBtn" aria-pressed="true" aria-label="Unmute shot sound">Sound off</button>
+                <div class="board" id="board" role="grid" aria-label="Whack-a-Zombie board">
+                  {Array.from({ length: 9 }, (_, i) => (
+                    <div class="hole" data-hole={String(i)} role="gridcell">
+                      <button type="button" class="zombie" data-zombie aria-label="Target">
+                        <span class="zpic">
+                          <img class="zimg" alt="" width="160" height="160" decoding="async" />
+                          <span class="zfall" aria-hidden="true"></span>
+                        </span>
+                        <span class="zname"></span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="hall-sec">
+      <div class="wrap">
+        <GameLeaderboard compact />
+      </div>
+    </section>
+  </main>
+  <dialog class="times-up" id="timesUp" aria-labelledby="timesTitle">
+    <div class="times-box">
+      <button type="button" class="popup-x" aria-label="Close">×</button>
+      <div class="confetti" id="confetti" hidden></div>
+      <div class="popup-scroll">
+        <h2 id="timesTitle">Time's Up!</h2>
+        <p class="times-player" id="timesPlayer"></p>
+        <p class="rank-title" id="timesClass" hidden></p>
+        <p class="times-score"><strong id="timesScore">0</strong></p>
+        <p class="times-rank" id="timesRank"></p>
+        <p class="times-badge" id="timesBadge" hidden>New High Score!</p>
+        <p class="times-msg" id="timesMsg"></p>
+        <div class="beat" data-beat>
+          <p class="beat-line" data-beat-line></p>
+          <p class="beat-gap" data-beat-gap hidden></p>
+          <div class="beat-skel" data-beat-skel aria-hidden="true"><i></i><i></i><i></i></div>
+          <ol class="beat-list" data-beat-list hidden></ol>
+        </div>
+        <div class="btns times-actions">
+          <button type="button" class="btn" id="timesAgain">Play Again</button>
+          <button type="button" class="btn ghost" id="timesLb">View Leaderboard</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+  <dialog class="loser-dlg" id="loserDlg" aria-labelledby="loserTitle">
+    <div class="loser-box">
+      <button type="button" class="popup-x" aria-label="Close">×</button>
+      <div class="popup-scroll">
+        <img class="loser-pic" id="loserImg" alt="Shocked face" width="640" height="640" />
+        <p class="loser-title" id="loserTitle">LOSER!</p>
+        <p class="loser-who" id="loserWho"></p>
+        <p class="rank-title" id="loserClass" hidden></p>
+        <p class="loser-roast" id="loserRoast"></p>
+        <div class="beat" data-beat>
+          <p class="beat-line" data-beat-line></p>
+          <p class="beat-gap" data-beat-gap hidden></p>
+          <div class="beat-skel" data-beat-skel aria-hidden="true"><i></i><i></i><i></i></div>
+          <ol class="beat-list" data-beat-list hidden></ol>
+        </div>
+        <div class="btns times-actions">
+          <button type="button" class="btn" id="loserAgain">Try Again</button>
+          <button type="button" class="btn ghost" id="loserLb">View Leaderboard</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+  <Footer />
+</Layout>
+
+<script>
+  // All tunable numbers live in GAME (src/lib/whack-config.ts).
+  import { WHACK as GAME, titleOf, comboMult } from "../lib/whack-config";
+
+  const LOCAL_KEY = "whack-a-zombie-scores";
+  const MUTE_KEY = "whack-muted";
+  const ROUND = GAME.round;
+  const LOSER_IMAGE_PATH = "/targets/shocked.jpg";
+  const TARGETS = [
+    { id: "cat", src: "/targets/cat.jpg", label: "Selfie Cat", emoji: "🐱" },
+    { id: "monkey", src: "/targets/monkey.jpg", label: "Yawning Monkey", emoji: "🐵" },
+    { id: "donkeys", src: "/targets/donkeys.jpg", label: "Donkey Duo", emoji: "🫏" },
+    { id: "orangutan", src: "/targets/orangutan.jpg", label: "Sly Orangutan", emoji: "🦧" },
+    { id: "hippo", src: "/targets/hippo.jpg", label: "Big Mouth Hippo", emoji: "🦛" },
+  ];
+  const ROASTS = [
+    (x) => `Score: ${x}. Even Server loads faster than you.`,
+    (x) => `Score: ${x}. Selfie Cat is not impressed.`,
+    (x) => `Score: ${x}. Yawning Monkey lasted longer than you.`,
+    (x) => `Score: ${x}. Donkey Duo saw that. They're still laughing.`,
+    (x) => `Score: ${x}. Sly Orangutan already moved on.`,
+    (x) => `Score: ${x}. Big Mouth Hippo could have scored that with a yawn.`,
+  ];
+
+  const NAME_KEY = "whack-chosen-name";
+  const nickEl = document.getElementById("nickname");
+  const hintEl = document.getElementById("nameHint");
+  const playNameEl = document.getElementById("playName");
+  const playAva = document.getElementById("playAva");
+  const nickCount = document.getElementById("nickCount");
+  const pickGrid = document.getElementById("pickGrid");
+  const pickNone = document.getElementById("pickNone");
+  const studentSearch = document.getElementById("studentSearch");
+  const paneStudent = document.getElementById("paneStudent");
+  const paneGuest = document.getElementById("paneGuest");
+  const randNick = document.getElementById("randNick");
+  const FUN_NICKS = [
+    "ZombieSlayer42",
+    "BrainEater",
+    "GraveDancer",
+    "MoleWhacker",
+    "GoldSniper",
+    "BoomDodger",
+    "DirtNinja",
+    "ComboKing",
+    "NightBite",
+    "HeadshotKid",
+  ];
+  let whoMode = "student";
+  let pickedStudent = "";
+  const startBtn = document.getElementById("startBtn");
+  const againBtn = document.getElementById("againBtn");
+  const setup = document.getElementById("setup");
+  const timeVal = document.getElementById("timeVal");
+  const timeBox = document.getElementById("timeBox");
+  const timeBar = document.getElementById("timeBar");
+  const scoreVal = document.getElementById("scoreVal");
+  const arcadeEl = document.querySelector(".arcade");
+  const comboPop = document.getElementById("comboPop");
+  const playerVal = document.getElementById("playerVal");
+  const arena = document.getElementById("arena");
+  const countOv = document.getElementById("countOv");
+  const board = document.getElementById("board");
+  const timesClass = document.getElementById("timesClass");
+  const loserWho = document.getElementById("loserWho");
+  const loserClass = document.getElementById("loserClass");
+  const muteBtn = document.getElementById("muteBtn");
+  const dialog = document.getElementById("timesUp");
+  const timesPlayer = document.getElementById("timesPlayer");
+  const timesScore = document.getElementById("timesScore");
+  const timesRank = document.getElementById("timesRank");
+  const timesBadge = document.getElementById("timesBadge");
+  const timesMsg = document.getElementById("timesMsg");
+  const timesAgain = document.getElementById("timesAgain");
+  const timesLb = document.getElementById("timesLb");
+  const confetti = document.getElementById("confetti");
+  const loserDlg = document.getElementById("loserDlg");
+  const loserImg = document.getElementById("loserImg");
+  const loserRoast = document.getElementById("loserRoast");
+  const loserAgain = document.getElementById("loserAgain");
+  const loserLb = document.getElementById("loserLb");
+  const holes = Array.from(document.querySelectorAll("[data-hole]"));
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isMobile = matchMedia("(pointer: coarse)").matches || matchMedia("(max-width: 700px)").matches;
+
+  let playerName = "";
+  let playing = false;
+  let roundLive = false;
+  let score = 0;
+  let streak = 0;
+  let left = ROUND;
+  let tickId = 0;
+  let spawnId = 0;
+  let hideId = 0;
+  let countId = 0;
+  let active = -1;
+  let activeKind = "normal";
+  let lastTarget = "";
+  let matchStart = 0;
+  let muted = true;
+  let audioCtx = null;
+
+  const preload = (src) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+    return img;
+  };
+  TARGETS.forEach((t) => preload(t.src));
+  preload(LOSER_IMAGE_PATH);
+  loserImg.src = LOSER_IMAGE_PATH;
+  loserImg.addEventListener("error", () => {
+    loserImg.replaceWith(Object.assign(document.createElement("p"), { className: "loser-fall", textContent: "😱" }));
+  });
+
+  const pickTarget = () => {
+    const pool = TARGETS.length > 1 ? TARGETS.filter((t) => t.id !== lastTarget) : TARGETS;
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    lastTarget = t.id;
+    return t;
+  };
+
+  const playerNameNow = () => {
+    if (whoMode === "guest") {
+      return nickEl.value.replace(/\s+/g, " ").trim().slice(0, 20);
+    }
+    return pickedStudent.trim();
+  };
+
+  const setWhoMode = (mode) => {
+    whoMode = mode === "guest" ? "guest" : "student";
+    setup.dataset.who = whoMode;
+    paneStudent.hidden = whoMode !== "student";
+    paneGuest.hidden = whoMode !== "guest";
+    setup.querySelectorAll(".who-tab").forEach((tab) => {
+      tab.setAttribute("aria-selected", String(tab.dataset.who === whoMode));
+    });
+  };
+
+  const markStudent = (name) => {
+    pickedStudent = name;
+    pickGrid.querySelectorAll(".pick-card").forEach((card) => {
+      const on = card.dataset.name === name;
+      card.classList.toggle("is-on", on);
+      card.setAttribute("aria-selected", String(on));
+    });
+  };
+
+  const filterCards = () => {
+    const q = studentSearch.value.trim().toLowerCase();
+    let shown = 0;
+    pickGrid.querySelectorAll(".pick-card").forEach((card) => {
+      const hit = !q || card.dataset.name.toLowerCase().includes(q);
+      card.hidden = !hit;
+      if (hit) shown += 1;
+    });
+    pickNone.hidden = shown > 0;
+  };
+
+  const syncStart = () => {
+    const name = playerNameNow();
+    startBtn.disabled = playing || !name;
+    if (playNameEl) playNameEl.textContent = name || "—";
+    if (playAva) playAva.textContent = name ? initialsOf(name) : "?";
+    if (nickCount) nickCount.textContent = `${nickEl.value.length}/20`;
+    if (name) {
+      try {
+        localStorage.setItem(NAME_KEY, JSON.stringify({ mode: whoMode, name }));
+      } catch (e) {}
+    }
+  };
+
+  const restoreName = () => {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(NAME_KEY) || "null");
+    } catch (e) {
+      saved = null;
+    }
+    if (!saved || typeof saved.name !== "string") return;
+    const name = saved.name.replace(/\s+/g, " ").trim().slice(0, 20);
+    if (!name) return;
+    const cards = [...pickGrid.querySelectorAll(".pick-card")];
+    const match = cards.find((c) => c.dataset.name === name);
+    if (saved.mode === "guest" || !match) {
+      setWhoMode("guest");
+      markStudent("");
+      nickEl.value = name;
+    } else {
+      setWhoMode("student");
+      nickEl.value = "";
+      markStudent(name);
+    }
+  };
+
+  const resetCombo = () => {
+    streak = 0;
+    if (comboPop) {
+      comboPop.hidden = true;
+      comboPop.classList.remove("pop");
+    }
+  };
+
+  const bumpCombo = () => {
+    streak += 1;
+    const m = comboMult(streak);
+    if (!comboPop) return;
+    if (m >= 2) {
+      comboPop.hidden = false;
+      comboPop.textContent = `COMBO x${m}!`;
+      comboPop.classList.remove("pop");
+      void comboPop.offsetWidth;
+      comboPop.classList.add("pop");
+    } else {
+      comboPop.hidden = true;
+    }
+  };
+
+  const setPanic = (on) => {
+    timeBox?.classList.toggle("panic", on);
+    arena.classList.toggle("panic", on);
+  };
+
+  const setTimeBar = () => {
+    if (timeBar) timeBar.style.transform = `scaleX(${Math.max(0, left / ROUND)})`;
+  };
+
+  const paintScore = () => {
+    scoreVal.textContent = String(score);
+    if (reduceMotion) return;
+    scoreVal.classList.remove("bump");
+    void scoreVal.offsetWidth;
+    scoreVal.classList.add("bump");
+  };
+
+  const setMatchUi = (on) => {
+    arcadeEl?.classList.toggle("match-on", on);
+  };
+
+  const hideZombie = (escaped = false) => {
+    clearTimeout(hideId);
+    if (active >= 0) {
+      if (escaped && holes[active].classList.contains("up")) resetCombo();
+      holes[active].classList.remove("up", "hit", "is-bomb", "is-gold");
+    }
+    active = -1;
+    activeKind = "normal";
+  };
+
+  const pickKind = () => {
+    if (Math.random() < GAME.goldenChance) return "golden";
+    const elapsed = matchStart ? Date.now() - matchStart : 0;
+    if (elapsed >= GAME.bombSafeMs && Math.random() < GAME.bombChance) return "bomb";
+    return "normal";
+  };
+
+  const showTarget = (btn, target, kind) => {
+    const hole = btn.closest("[data-hole]");
+    hole.classList.toggle("is-bomb", kind === "bomb");
+    hole.classList.toggle("is-gold", kind === "golden");
+    const img = btn.querySelector(".zimg");
+    const fall = btn.querySelector(".zfall");
+    const name = btn.querySelector(".zname");
+    if (kind === "bomb") {
+      name.textContent = "BOMB";
+      btn.setAttribute("aria-label", "Bomb");
+      fall.textContent = "💣";
+      fall.hidden = false;
+      img.hidden = true;
+      return;
+    }
+    const label = kind === "golden" ? `${target.label} GOLD` : target.label;
+    name.textContent = label;
+    btn.setAttribute("aria-label", label);
+    fall.textContent = target.emoji;
+    fall.hidden = true;
+    img.hidden = false;
+    img.alt = label;
+    const onErr = () => {
+      img.hidden = true;
+      fall.hidden = false;
+    };
+    img.removeEventListener("error", img._err);
+    img._err = onErr;
+    img.addEventListener("error", onErr);
+    if (!img.src.endsWith(target.src)) img.src = target.src;
+  };
+
+  const pop = () => {
+    if (!playing || !roundLive || !TARGETS.length) return;
+    hideZombie(false);
+    const i = Math.floor(Math.random() * holes.length);
+    const target = pickTarget();
+    const kind = pickKind();
+    const btn = holes[i].querySelector("[data-zombie]");
+    showTarget(btn, target, kind);
+    holes[i].classList.add("up");
+    active = i;
+    activeKind = kind;
+    let stay = Math.max(450, 1000 - score * 25);
+    if (kind === "golden") stay = GAME.goldenStayMs;
+    else if (left <= GAME.lastSeconds) stay = Math.max(320, Math.round(stay * GAME.lastSecondsSpeed));
+    hideId = window.setTimeout(() => {
+      hideZombie(true);
+      if (playing && roundLive) queueSpawn();
+    }, stay);
+  };
+
+  const queueSpawn = () => {
+    clearTimeout(spawnId);
+    let wait = Math.max(180, 720 - score * 22);
+    if (left <= GAME.lastSeconds) wait = Math.max(120, Math.round(wait * GAME.lastSecondsSpeed));
+    spawnId = window.setTimeout(pop, reduceMotion ? Math.max(wait, 400) : wait * (0.7 + Math.random() * 0.5));
+  };
+
+  const runCountdown = (done) => {
+    const steps = GAME.countdown;
+    let i = 0;
+    countOv.hidden = false;
+    const step = () => {
+      if (!playing) {
+        countOv.hidden = true;
+        return;
+      }
+      if (i >= steps.length) {
+        countOv.hidden = true;
+        countOv.textContent = "";
+        done();
+        return;
+      }
+      countOv.textContent = String(steps[i]);
+      countOv.classList.remove("go-pop");
+      void countOv.offsetWidth;
+      countOv.classList.add("go-pop");
+      i += 1;
+      countId = window.setTimeout(step, GAME.countdownStepMs);
+    };
+    step();
+  };
+
+  const stopTimers = () => {
+    playing = false;
+    roundLive = false;
+    setMatchUi(false);
+    clearInterval(tickId);
+    clearTimeout(spawnId);
+    clearTimeout(hideId);
+    clearTimeout(countId);
+    if (countOv) {
+      countOv.hidden = true;
+      countOv.textContent = "";
+    }
+    setPanic(false);
+    hideZombie(false);
+  };
+
+  const uniqueBest = (rows) => {
+    const best = new Map();
+    for (const row of rows) {
+      const key = String(row.player_name || "").trim().toLowerCase();
+      if (!key) continue;
+      const prev = best.get(key);
+      if (!prev || row.score > prev.score) best.set(key, { player_name: row.player_name, score: row.score });
+    }
+    return [...best.values()].sort((a, b) => b.score - a.score);
+  };
+
+  const readLocalAll = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveLocal = (name, pts) => {
+    try {
+      const list = readLocalAll();
+      list.push({ player_name: name, score: pts, created_at: new Date().toISOString() });
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(list.slice(-80)));
+    } catch (e) {}
+  };
+
+  const localSummary = (name, pts) => {
+    const before = uniqueBest(readLocalAll());
+    const prevRow = before.find((r) => r.player_name.trim().toLowerCase() === name.trim().toLowerCase());
+    const previous_best = prevRow ? prevRow.score : null;
+    saveLocal(name, pts);
+    const after = uniqueBest(readLocalAll());
+    const idx = after.findIndex((r) => r.player_name.trim().toLowerCase() === name.trim().toLowerCase());
+    return {
+      rank: idx >= 0 ? idx + 1 : after.length,
+      high_score: previous_best === null || pts > previous_best,
+    };
+  };
+
+  const countUp = (el, to) => {
+    if (reduceMotion || to <= 0) {
+      el.textContent = String(to);
+      return;
+    }
+    const start = performance.now();
+    const run = (now) => {
+      const t = Math.min(1, (now - start) / 700);
+      el.textContent = String(Math.round(to * t));
+      if (t < 1) requestAnimationFrame(run);
+    };
+    requestAnimationFrame(run);
+  };
+
+  const burstConfetti = () => {
+    confetti.hidden = false;
+    confetti.innerHTML = "";
+    if (reduceMotion) return;
+    for (let i = 0; i < 22; i++) {
+      const bit = document.createElement("i");
+      bit.style.left = `${Math.random() * 100}%`;
+      bit.style.animationDelay = `${Math.random() * 0.4}s`;
+      bit.style.setProperty("--rot", `${Math.random() * 360}deg`);
+      confetti.appendChild(bit);
+    }
+  };
+
+  const initialsOf = (n) =>
+    String(n)
+      .split(/\s+/)
+      .map((w) => w[0] || "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+  const escapeHtml = (value) =>
+    String(value).replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+
+  const resetBeatBoxes = () => {
+    document.querySelectorAll("[data-beat]").forEach((box) => {
+      box.querySelector("[data-beat-line]").textContent = "Checking who is beating you…";
+      box.querySelector("[data-beat-gap]").hidden = true;
+      box.querySelector("[data-beat-skel]").hidden = false;
+      const list = box.querySelector("[data-beat-list]");
+      list.hidden = true;
+      list.innerHTML = "";
+    });
+  };
+
+  const fetchFreshBoard = async (name, pts) => {
+    let rows = [];
+    try {
+      const res = await fetch("/api/scores", { headers: { accept: "application/json" } });
+      if (!res.ok) throw new Error("bad");
+      const data = await res.json();
+      rows = Array.isArray(data.scores) ? data.scores : [];
+    } catch {
+      rows = readLocalAll();
+    }
+    const best = uniqueBest(rows);
+    const key = name.trim().toLowerCase();
+    const idx = best.findIndex((r) => r.player_name.trim().toLowerCase() === key);
+    if (idx === -1) best.push({ player_name: name, score: pts });
+    else if (pts > best[idx].score) best[idx] = { player_name: name, score: pts };
+    return uniqueBest(best);
+  };
+
+  const fillBeatBoxes = (ranked, name, pts, apiRank) => {
+    const key = name.trim().toLowerCase();
+    let meIdx = ranked.findIndex((r) => r.player_name.trim().toLowerCase() === key);
+    if (meIdx < 0) {
+      ranked = uniqueBest([...ranked, { player_name: name, score: pts }]);
+      meIdx = ranked.findIndex((r) => r.player_name.trim().toLowerCase() === key);
+    }
+    let meRank = meIdx + 1;
+    if (typeof apiRank === "number" && apiRank > meRank) meRank = apiRank;
+    const above = ranked.slice(0, meIdx);
+    const nearest = above[above.length - 1];
+    const line =
+      meRank === 1 ? "You're on top! Everyone else is crying." : "These zombies are better than you:";
+    const gap =
+      meRank === 1 || !nearest
+        ? ""
+        : nearest.score - pts > 0
+          ? `You are ${nearest.score - pts} points behind ${nearest.player_name}`
+          : `You are tied with ${nearest.player_name}`;
+
+    let slots = [];
+    if (meRank === 1) {
+      slots = ranked.slice(0, 5).map((row, i) => ({ row, rank: i + 1, ellipsis: false }));
+    } else if (meRank <= 5) {
+      slots = ranked.slice(0, meRank).map((row, i) => ({ row, rank: i + 1, ellipsis: false }));
+    } else {
+      slots = ranked.slice(0, 5).map((row, i) => ({ row, rank: i + 1, ellipsis: false }));
+      slots.push({ ellipsis: true });
+      slots.push({ row: ranked[meIdx], rank: meRank, ellipsis: false });
+    }
+
+    const html = slots
+      .map((slot) => {
+        if (slot.ellipsis) return `<li class="beat-more" aria-hidden="true">…</li>`;
+        const mine = slot.row.player_name.trim().toLowerCase() === key;
+        const medal = slot.rank <= 3 ? ` medal-${slot.rank}` : "";
+        return `<li class="beat-row${medal}${mine ? " is-me" : ""}">
+          <span class="beat-rank">#${slot.rank}</span>
+          <span class="avatar beat-ava">${escapeHtml(initialsOf(slot.row.player_name))}</span>
+          <span class="beat-name">${escapeHtml(slot.row.player_name)}</span>
+          <span class="beat-score">${slot.row.score}</span>
+        </li>`;
+      })
+      .join("");
+
+    document.querySelectorAll("[data-beat]").forEach((box) => {
+      box.querySelector("[data-beat-line]").textContent = line;
+      const gapEl = box.querySelector("[data-beat-gap]");
+      gapEl.hidden = !gap;
+      gapEl.textContent = gap;
+      box.querySelector("[data-beat-skel]").hidden = true;
+      const list = box.querySelector("[data-beat-list]");
+      list.hidden = false;
+      list.innerHTML = html;
+    });
+  };
+
+  const openWinner = (name, pts, rank, high) => {
+    timesPlayer.textContent = name;
+    if (timesClass) {
+      timesClass.hidden = false;
+      timesClass.textContent = titleOf(pts);
+    }
+    timesScore.textContent = "0";
+    timesRank.textContent = `You are #${rank}!`;
+    timesBadge.hidden = !high;
+    timesMsg.textContent = pts >= 21 ? "Legend of Class 9!" : "Zombie hunter in the making!";
+    resetBeatBoxes();
+    burstConfetti();
+    if (typeof dialog.showModal === "function" && !dialog.open) dialog.showModal();
+    lockPage(true);
+    countUp(timesScore, pts);
+  };
+
+  const openLoser = (pts) => {
+    if (loserWho) loserWho.textContent = playerName;
+    if (loserClass) {
+      loserClass.hidden = false;
+      loserClass.textContent = titleOf(pts);
+    }
+    loserRoast.textContent = ROASTS[Math.floor(Math.random() * ROASTS.length)](pts);
+    resetBeatBoxes();
+    if (typeof loserDlg.showModal === "function" && !loserDlg.open) loserDlg.showModal();
+    lockPage(true);
+  };
+
+  const lockPage = (on) => {
+    document.documentElement.style.overflow = on ? "hidden" : "";
+    document.body.style.overflow = on ? "hidden" : "";
+  };
+
+  const closePopups = () => {
+    if (dialog.open) dialog.close();
+    if (loserDlg.open) loserDlg.close();
+    confetti.hidden = true;
+    confetti.innerHTML = "";
+    lockPage(false);
+    againBtn.hidden = false;
+  };
+
+  const submitScore = async (name, pts) => {
+    let rank = 1;
+    let high = true;
+    try {
+      const res = await fetch("/api/scores", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ player_name: name, score: pts }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      const data = await res.json();
+      if (typeof data.rank === "number") rank = data.rank;
+      if (typeof data.high_score === "boolean") high = data.high_score;
+    } catch {
+      const local = localSummary(name, pts);
+      rank = local.rank;
+      high = local.high_score;
+    }
+    window.dispatchEvent(new CustomEvent("whack-scores-updated", { detail: { player: name, slide: true } }));
+    return { rank, high };
+  };
+
+  const endGame = () => {
+    stopTimers();
+    startBtn.hidden = true;
+    againBtn.hidden = false;
+    startBtn.disabled = false;
+    const name = playerName;
+    const pts = score;
+    submitScore(name, pts).then(({ rank, high }) => {
+      if (pts >= 15) openWinner(name, pts, rank, high);
+      else openLoser(pts);
+      return fetchFreshBoard(name, pts)
+        .then((ranked) => fillBeatBoxes(ranked, name, pts, rank))
+        .catch(() => fillBeatBoxes(uniqueBest(readLocalAll()), name, pts, rank));
+    });
+  };
+
+  const startGame = () => {
+    const name = playerNameNow();
+    if (!name) return;
+    closePopups();
+    playerName = name;
+    score = 0;
+    streak = 0;
+    left = ROUND;
+    playing = true;
+    roundLive = false;
+    matchStart = 0;
+    resetCombo();
+    setPanic(false);
+    playerVal.textContent = playerName;
+    scoreVal.textContent = "0";
+    scoreVal.classList.remove("bump");
+    timeVal.textContent = String(ROUND);
+    setTimeBar();
+    setMatchUi(true);
+    startBtn.hidden = true;
+    againBtn.hidden = true;
+    startBtn.disabled = true;
+    runCountdown(() => {
+      if (!playing) return;
+      roundLive = true;
+      matchStart = Date.now();
+      tickId = window.setInterval(() => {
+        left -= 1;
+        timeVal.textContent = String(left);
+        setTimeBar();
+        setPanic(left > 0 && left <= GAME.lastSeconds);
+        if (left <= 0) endGame();
+      }, 1000);
+      pop();
+    });
+  };
+
+  const syncMute = () => {
+    muteBtn.setAttribute("aria-pressed", String(!muted));
+    muteBtn.setAttribute("aria-label", muted ? "Unmute shot sound" : "Mute shot sound");
+    muteBtn.textContent = muted ? "Sound off" : "Sound on";
+    try {
+      localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+    } catch (e) {}
+  };
+
+  const unlockAudio = () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  };
+
+  const playShot = () => {
+    if (muted) return;
+    try {
+      unlockAudio();
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const noise = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(55, t + 0.09);
+      noise.type = "sawtooth";
+      noise.frequency.setValueAtTime(90, t);
+      g.gain.setValueAtTime(0.12, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+      osc.connect(g);
+      noise.connect(g);
+      g.connect(audioCtx.destination);
+      osc.start(t);
+      noise.start(t);
+      osc.stop(t + 0.12);
+      noise.stop(t + 0.12);
+    } catch (e) {}
+  };
+
+  const fxAt = (e, className, text) => {
+    const rect = arena.getBoundingClientRect();
+    const el = document.createElement("span");
+    el.className = className;
+    el.textContent = text || "";
+    el.style.left = `${e.clientX - rect.left}px`;
+    el.style.top = `${e.clientY - rect.top}px`;
+    arena.appendChild(el);
+    window.setTimeout(() => el.remove(), 900);
+  };
+
+  const shootFx = (e, hit) => {
+    playShot();
+    fxAt(e, "fx bang", "BANG!");
+    fxAt(e, "fx flash");
+    fxAt(e, "fx hole-mark");
+    if (hit) {
+      fxAt(e, "fx slime");
+      if (!reduceMotion) {
+        arena.classList.remove("shake");
+        void arena.offsetWidth;
+        arena.classList.add("shake");
+        window.setTimeout(() => arena.classList.remove("shake"), 220);
+      }
+    } else {
+      fxAt(e, "fx miss", "MISS");
+    }
+  };
+
+  const onShot = (e) => {
+    if (e.button && e.button !== 0) return;
+    e.preventDefault();
+    if (!playing || !roundLive) return;
+    const hole = e.target.closest("[data-hole]");
+    const hit = hole && hole.classList.contains("up") && holes[active] === hole;
+    const kind = hit ? activeKind : "miss";
+    if (hit && kind === "bomb") {
+      playShot();
+      fxAt(e, "fx bang", "BANG!");
+      fxAt(e, "fx flash");
+      fxAt(e, "fx hole-mark");
+    } else {
+      shootFx(e, hit);
+    }
+    if (hit) {
+      if (kind === "bomb") {
+        resetCombo();
+        score = Math.max(0, score - GAME.bombPenalty);
+        fxAt(e, "fx boom", `BOOM -${GAME.bombPenalty}`);
+        arena.classList.remove("boom-flash", "shake");
+        void arena.offsetWidth;
+        arena.classList.add("boom-flash");
+        if (!reduceMotion) arena.classList.add("shake");
+        window.setTimeout(() => arena.classList.remove("boom-flash", "shake"), 280);
+      } else if (kind === "golden") {
+        bumpCombo();
+        score = Math.min(GAME.maxScore, score + GAME.goldenPoints);
+        fxAt(e, "fx gold-pop", "+5 GOLD!");
+      } else {
+        bumpCombo();
+        score = Math.min(GAME.maxScore, score + comboMult(streak));
+      }
+      paintScore();
+      hole.classList.add("hit");
+      hole.classList.remove("up");
+      const i = active;
+      active = -1;
+      activeKind = "normal";
+      clearTimeout(hideId);
+      window.setTimeout(() => {
+        if (holes[i]) holes[i].classList.remove("hit", "is-bomb", "is-gold");
+      }, 180);
+      queueSpawn();
+    } else if (hole) {
+      resetCombo();
+    }
+  };
+
+  try {
+    const saved = localStorage.getItem(MUTE_KEY);
+    if (saved === "0") muted = false;
+    else if (saved === "1") muted = true;
+    else muted = isMobile;
+  } catch (e) {
+    muted = isMobile;
+  }
+  syncMute();
+
+  setup.querySelectorAll(".who-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      setWhoMode(tab.dataset.who);
+      syncStart();
+    });
+  });
+  pickGrid.addEventListener("click", (e) => {
+    const card = e.target.closest(".pick-card");
+    if (!card || card.hidden) return;
+    markStudent(card.dataset.name);
+    syncStart();
+  });
+  studentSearch.addEventListener("input", () => {
+    filterCards();
+  });
+  nickEl.addEventListener("input", () => {
+    nickEl.value = nickEl.value.slice(0, 20);
+    syncStart();
+  });
+  randNick.addEventListener("click", () => {
+    const next = FUN_NICKS[Math.floor(Math.random() * FUN_NICKS.length)];
+    nickEl.value = next;
+    setWhoMode("guest");
+    syncStart();
+  });
+  restoreName();
+  setup.addEventListener("submit", (e) => {
+    e.preventDefault();
+    startGame();
+  });
+  againBtn.addEventListener("click", startGame);
+  timesAgain.addEventListener("click", startGame);
+  loserAgain.addEventListener("click", startGame);
+  const jumpToBoard = () => {
+    closePopups();
+    document.getElementById("game-leaderboard")?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  };
+  timesLb.addEventListener("click", jumpToBoard);
+  loserLb.addEventListener("click", jumpToBoard);
+  document.querySelectorAll(".popup-x").forEach((btn) => {
+    btn.addEventListener("click", closePopups);
+  });
+  dialog.addEventListener("click", (e) => {
+    if (e.target === dialog) closePopups();
+  });
+  loserDlg.addEventListener("click", (e) => {
+    if (e.target === loserDlg) closePopups();
+  });
+  dialog.addEventListener("close", () => lockPage(false));
+  loserDlg.addEventListener("close", () => lockPage(false));
+  muteBtn.addEventListener("click", () => {
+    muted = !muted;
+    if (!muted) unlockAudio();
+    syncMute();
+  });
+  board.addEventListener("pointerdown", onShot);
+
+  syncStart();
+</script>
+
+

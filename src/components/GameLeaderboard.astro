@@ -1,0 +1,209 @@
+---
+import "../styles/hall-of-fame.css";
+
+interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+---
+
+<section class:list={["game-lb", compact && "compact"]} id="game-leaderboard" data-game-lb>
+  <h2 class="lb-title">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v6a5 5 0 01-10 0V4z"></path><path d="M7 6H4.5a2.5 2.5 0 002.5 4"></path><path d="M17 6h2.5a2.5 2.5 0 01-2.5 4"></path></svg>
+    HALL OF FAME
+  </h2>
+  <p class="lead">Best Whack-a-Zombie scores. One high score per player.</p>
+  <div class="lb-tabs" role="tablist" aria-label="Leaderboard period">
+    <span class="lb-slider" aria-hidden="true"></span>
+    <button type="button" class="lb-tab" role="tab" data-period="today" aria-selected="true">Today</button>
+    <button type="button" class="lb-tab" role="tab" data-period="all" aria-selected="false">All Time</button>
+  </div>
+  <p class="lb-status" data-lb-status hidden></p>
+  <div class="podium" data-lb-podium hidden></div>
+  <ol class="glb" data-lb-list>
+    <li class="glb-empty">
+      <span class="empty-art" aria-hidden="true">🧟</span>
+      <strong>No zombies hunted yet. Be the first!</strong>
+    </li>
+  </ol>
+</section>
+
+<script>
+  import { initials } from "../lib/utils";
+  import { titleOf } from "../lib/whack-config";
+
+  const LOCAL_KEY = "whack-a-zombie-scores";
+  const ME_KEY = "whack-last-player";
+
+  type Row = { player_name: string; score: number; created_at?: string };
+  type Period = "today" | "all";
+
+  const escapeHtml = (value: string) =>
+    value.replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c] as string));
+
+  const isLocalToday = (iso?: string) => {
+    if (!iso) return false;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return false;
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  };
+
+  const uniqueBest = (rows: Row[]) => {
+    const best = new Map<string, Row>();
+    for (const row of rows) {
+      const key = row.player_name.trim().toLowerCase();
+      const prev = best.get(key);
+      if (!prev || row.score > prev.score) best.set(key, row);
+    }
+    return [...best.values()].sort((a, b) => b.score - a.score).slice(0, 10);
+  };
+
+  const readLocal = (period: Period): Row[] => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+      if (!Array.isArray(raw)) return [];
+      const valid = raw.filter(
+        (r) =>
+          r &&
+          typeof r.player_name === "string" &&
+          typeof r.score === "number" &&
+          Number.isInteger(r.score)
+      ) as Row[];
+      const scoped = period === "today" ? valid.filter((r) => isLocalToday(r.created_at)) : valid;
+      return uniqueBest(scoped);
+    } catch {
+      return [];
+    }
+  };
+
+  const rowHtml = (row: Row, place: number, top: number, meKey: string, slide: boolean) => {
+    const mine = Boolean(meKey && row.player_name.trim().toLowerCase() === meKey);
+    const width = Math.max(8, Math.round((row.score / top) * 100));
+    const cls = ["glb-row", mine ? "is-me" : "", mine && slide ? "glb-in" : ""].filter(Boolean).join(" ");
+    return `<li class="${cls}" data-player="${escapeHtml(row.player_name)}" style="--i:${place}">
+      <span class="glb-bar" style="width:${width}%"></span>
+      <span class="glb-rank">#${place}</span>
+      <span class="avatar glb-ava">${escapeHtml(initials(row.player_name))}</span>
+      <span class="glb-who">
+        <span class="glb-name">${escapeHtml(row.player_name)}${mine ? `<b class="you">YOU</b>` : ""}</span>
+        <span class="glb-title">${escapeHtml(titleOf(row.score))}</span>
+      </span>
+      <span class="glb-score">${row.score}</span>
+    </li>`;
+  };
+
+  const podHtml = (row: Row, place: number, meKey: string) => {
+    const mine = Boolean(meKey && row.player_name.trim().toLowerCase() === meKey);
+    return `<article class="pod-card pod-${place}${mine ? " is-me" : ""}" style="--i:${place}">
+      ${place === 1 ? `<span class="crown" aria-hidden="true">👑</span><span class="spark s1"></span><span class="spark s2"></span>` : ""}
+      <span class="pod-place">#${place}</span>
+      <span class="avatar pod-ava">${escapeHtml(initials(row.player_name))}</span>
+      <strong class="pod-name">${escapeHtml(row.player_name)}${mine ? `<b class="you">YOU</b>` : ""}</strong>
+      <span class="glb-title">${escapeHtml(titleOf(row.score))}</span>
+      <span class="pod-score">${row.score}</span>
+    </article>`;
+  };
+
+  const reveal = (root: HTMLElement) => {
+    const nodes = root.querySelectorAll(".pod-card, .glb-row");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      nodes.forEach((n) => n.classList.add("seen"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (ents) => {
+        ents.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("seen");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    nodes.forEach((n) => io.observe(n));
+  };
+
+  const render = (root: HTMLElement, rows: Row[], note: string, me: string, slide: boolean) => {
+    const list = root.querySelector("[data-lb-list]") as HTMLOListElement;
+    const podium = root.querySelector("[data-lb-podium]") as HTMLElement;
+    const status = root.querySelector("[data-lb-status]") as HTMLParagraphElement;
+    status.hidden = !note;
+    status.textContent = note;
+    if (!rows.length) {
+      podium.hidden = true;
+      podium.innerHTML = "";
+      list.innerHTML = `<li class="glb-empty">
+        <span class="empty-art" aria-hidden="true">🧟</span>
+        <strong>No zombies hunted yet. Be the first!</strong>
+      </li>`;
+      return;
+    }
+    const top = rows[0].score || 1;
+    const meKey = me.trim().toLowerCase();
+    const first = rows.slice(0, 3);
+    podium.hidden = false;
+    podium.innerHTML = [first[1], first[0], first[2]]
+      .map((row, i) => (row ? podHtml(row, i === 1 ? 1 : i === 0 ? 2 : 3, meKey) : `<span class="pod-gap"></span>`))
+      .join("");
+    const rest = rows.slice(3);
+    list.innerHTML = rest.length
+      ? rest.map((row, i) => rowHtml(row, i + 4, top, meKey, slide)).join("")
+      : "";
+    reveal(root);
+  };
+
+  const periodOf = (root: HTMLElement): Period =>
+    root.dataset.period === "all" ? "all" : "today";
+
+  const load = async (root: HTMLElement, slide = false) => {
+    let me = "";
+    try {
+      me = sessionStorage.getItem(ME_KEY) || "";
+    } catch {}
+    const period = periodOf(root);
+    try {
+      const res = await fetch(`/api/scores?period=${period}`, { headers: { accept: "application/json" } });
+      if (!res.ok) throw new Error("bad");
+      const data = await res.json();
+      const rows = Array.isArray(data.scores) ? uniqueBest(data.scores) : [];
+      render(root, rows, "", me, slide);
+    } catch {
+      render(
+        root,
+        readLocal(period),
+        "Online board is sleeping. Scores on this device still count until D1 is connected.",
+        me,
+        slide
+      );
+    }
+  };
+
+  const roots = document.querySelectorAll<HTMLElement>("[data-game-lb]");
+  const refresh = (slide = false) => roots.forEach((root) => load(root, slide));
+  roots.forEach((root) => {
+    root.dataset.period = "today";
+    root.querySelectorAll<HTMLButtonElement>("[data-period]").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const period = tab.dataset.period === "all" ? "all" : "today";
+        root.dataset.period = period;
+        root.querySelectorAll<HTMLButtonElement>("[data-period]").forEach((btn) => {
+          btn.setAttribute("aria-selected", String(btn.dataset.period === period));
+        });
+        load(root, false);
+      });
+    });
+  });
+  refresh(false);
+  window.addEventListener("whack-scores-updated", (e) => {
+    const detail = (e as CustomEvent<{ player?: string; slide?: boolean }>).detail || {};
+    if (detail.player) {
+      try {
+        sessionStorage.setItem(ME_KEY, detail.player);
+      } catch {}
+    }
+    refresh(Boolean(detail.slide));
+  });
+</script>

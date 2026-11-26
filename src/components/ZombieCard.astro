@@ -1,0 +1,55 @@
+---
+import type { Student } from "../data/students";
+import StudentPortrait from "./StudentPortrait.astro";
+import BehaviourRing from "./BehaviourRing.astro";
+import { barTone, funTitle } from "../lib/student-ui";
+
+interface Props {
+  student: Student;
+  index?: number;
+}
+const { student: s, index = 0 } = Astro.props;
+const title = funTitle(s);
+const rankClass = s.rank <= 3 ? `r${s.rank}` : "rx";
+---
+
+<article
+  class="z-card"
+  style={`--i:${index}`}
+  data-name={s.name}
+  data-roll={s.roll}
+  data-talent={s.talent}
+  data-overall={String(s.overall)}
+>
+  <div class="z-card-inner">
+    <span class:list={["z-rank", rankClass]}>
+      {s.rank === 1 ? <span aria-hidden="true">👑</span> : null}
+      #{s.rank}
+    </span>
+    <StudentPortrait name={s.name} roll={s.roll} size="md" />
+    <h3>{s.name}</h3>
+    <small>Roll no. {s.roll}</small>
+    <span class="z-title">{title}</span>
+    <BehaviourRing overall={s.overall} rating={s.rating} />
+    <div class="z-skills">
+      {
+        s.skills.map(([label, pct]) => (
+          <div class="z-skill">
+            <span>{label}</span>
+            <div class={`z-bar ${barTone(pct)}`} style={`--p:${pct}`}>
+              <i></i>
+            </div>
+            <em>{pct}%</em>
+          </div>
+        ))
+      }
+    </div>
+    <blockquote class="z-quote">{s.about}</blockquote>
+    <a class="z-more" href={`/students/${s.roll}`}>
+      View profile
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6"></path>
+      </svg>
+    </a>
+  </div>
+</article>

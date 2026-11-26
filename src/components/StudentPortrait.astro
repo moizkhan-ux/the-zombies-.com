@@ -1,0 +1,27 @@
+---
+import { initials } from "../lib/utils";
+import { photoSrc } from "../lib/student-ui";
+
+interface Props {
+  name: string;
+  roll: string;
+  size?: "sm" | "md" | "lg";
+  eager?: boolean;
+}
+const { name, roll, size = "md", eager = false } = Astro.props;
+const src = photoSrc(roll);
+const letters = initials(name);
+---
+
+<span class:list={["z-ava", size]}>
+  <img
+    class="z-photo"
+    src={src}
+    alt=""
+    width="160"
+    height="160"
+    loading={eager ? "eager" : "lazy"}
+    decoding="async"
+  />
+  <span class="z-fallback">{letters}</span>
+</span>

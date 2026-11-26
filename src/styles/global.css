@@ -41,6 +41,7 @@ header{position:sticky;top:0;z-index:5;padding:.75rem 1.25rem}
 .ico-sun{display:none}
 :root[data-theme="light"] .ico-sun{display:block}
 :root[data-theme="light"] .ico-moon{display:none}
+@media(max-width:900px){.navbar ul{gap:.15rem}.navbar ul a{padding:.5rem .6rem;font-size:.9rem}}
 @media(max-width:720px){.navbar ul a{padding:.5rem .5rem;font-size:.88rem;gap:.35rem}}
 @media(max-width:520px){.navbar{grid-template-columns:auto 1fr auto;gap:.4rem;padding-left:.7rem}.navbar ul{justify-content:center}.logo span{display:none}.navbar ul a{padding:.5rem .4rem;position:relative}.navbar ul a span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}}
 @media(prefers-reduced-motion:reduce){.knob{transition:none}}
@@ -204,7 +205,9 @@ dialog::backdrop{background:rgba(5,12,16,.65)}
 .player p{color:var(--muted);max-width:none}
 .player ul{padding-left:1.2rem;display:grid;gap:.4rem}
 .player .bnote{margin-top:.6rem}
-.player .stat{grid-template-columns:minmax(7.5rem,max-content) minmax(80px,1fr) 3.2rem;white-space:nowrap}
+.player .stat{grid-template-columns:minmax(7.5rem,max-content) minmax(80px,1fr) 3.2rem}
+.player .stat span{white-space:normal;max-width:14rem}
+.player .stat em{white-space:nowrap}
 .player .stat .bar{height:14px}
 .player .stat em{font-weight:800}
 .player .bar i{transform-origin:left center;animation:growBar .8s ease-out both}

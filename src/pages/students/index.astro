@@ -2,47 +2,69 @@
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import Footer from "../../components/Footer.astro";
-import { students, TRAITS } from "../../data/students";
-import { initials } from "../../lib/utils";
+import ZombieCard from "../../components/ZombieCard.astro";
+import { students, ranked, classAverage } from "../../data/students";
+import { uniqueTalents } from "../../lib/student-ui";
+import "../../styles/zombies.css";
+
+const talents = uniqueTalents(students);
+const first = ranked[0];
+const last = ranked[ranked.length - 1];
 ---
 
-<Layout title="Our students – ACD Academy">
+<Layout title="Our students – ACD Academy" description="Meet the Class 9 zombies: talents, skills and behaviour.">
   <Navbar />
-  <main>
+  <main class="zombies" data-zombies>
+    <div class="z-bg" aria-hidden="true">
+      <span class="z-fog a"></span>
+      <span class="z-fog b"></span>
+      <i class="z-ember"></i><i class="z-ember"></i><i class="z-ember"></i><i class="z-ember"></i><i class="z-ember"></i>
+      <span class="z-vignette"></span>
+    </div>
+    <section class="z-hero">
+      <div class="wrap">
+        <p class="z-kicker">Class 9</p>
+        <h1 class="z-marquee">MEET THE ZOMBIES</h1>
+        <p class="z-tag">12 students. Zero motivation. Infinite talent.</p>
+        <div class="z-chips">
+          <div class="z-chip"><b data-count={students.length}>0</b><span>Students</span></div>
+          <div class="z-chip"><b><span data-count={classAverage}>0</span>%</b><span>Class average</span></div>
+          <div class="z-chip"><b>{first?.name.split(" ")[0]}</b><span>Top · {first?.overall}%</span></div>
+          <div class="z-chip"><b>{last?.name.split(" ")[0]}</b><span>Lowest · {last?.overall}%</span></div>
+        </div>
+      </div>
+    </section>
     <section>
       <div class="wrap">
-        <h2>Our students</h2>
-        <div class="grid">
-          {
-            students.map((s) => (
-              <article class="card">
-                <div class="top">
-                  <div class="avatar">{initials(s.name)}</div>
-                  <div>
-                    <h3>{s.name}</h3>
-                    <small>Roll no. {s.roll}</small>
-                  </div>
-                </div>
-                <span class="best">Perfect at: {s.talent}</span>
-                {s.skills.map(([label, pct]) => (
-                  <div class="skill">
-                    <span>{label}</span>
-                    <div class="bar"><i style={`width:${pct}%`}></i></div>
-                    <em>{pct}%</em>
-                  </div>
-                ))}
-                {TRAITS.map((t, k) => (
-                  <div class="skill">
-                    <span>{t}</span>
-                    <div class="bar"><i style={`width:${s.behaviour[k]}%`}></i></div>
-                    <em>{s.behaviour[k]}%</em>
-                  </div>
-                ))}
-                <p class="note">{s.about}</p>
-                <a class="more" href={`/students/${s.roll}`}>Click here</a>
-              </article>
-            ))
-          }
+        <div class="z-controls">
+          <label class="z-sr" for="zSearch">Search a zombie</label>
+          <input class="z-search" id="zSearch" data-z-search type="search" placeholder="Search a zombie..." autocomplete="off" />
+          <div class="z-sorts" role="group" aria-label="Sort students">
+            <button type="button" class="z-sort" data-sort="rank" aria-pressed="true">Top behaviour</button>
+            <button type="button" class="z-sort" data-sort="az" aria-pressed="false">A to Z</button>
+            <button type="button" class="z-sort" data-sort="roll" aria-pressed="false">Roll no.</button>
+          </div>
+          <div class="z-filters" role="group" aria-label="Filter by subject">
+            <button type="button" class="z-filter" data-talent="all" aria-pressed="true">All</button>
+            {talents.map((t) => (
+              <button type="button" class="z-filter" data-talent={t} aria-pressed="false">{t}</button>
+            ))}
+          </div>
+          <p class="z-count" data-z-count>Showing {students.length} of {students.length} zombies</p>
+        </div>
+
+        <div data-z-roster>
+          <p class="z-empty">No zombie found. Maybe it ran away.</p>
+          <div class="z-grid" data-z-grid>
+            {students.map((s, i) => (
+              <ZombieCard student={s} index={i} />
+            ))}
+          </div>
+        </div>
+
+        <div class="z-cta">
+          <p>Think you're better than them? Beat them in Whack-a-Zombie</p>
+          <a class="z-play" href="/game">Play now</a>
         </div>
       </div>
     </section>
@@ -50,12 +72,7 @@ import { initials } from "../../lib/utils";
   <Footer />
 </Layout>
 
-<style>
-  a.more {
-    display: block;
-    width: 100%;
-    text-align: center;
-    text-decoration: none;
-    box-sizing: border-box;
-  }
-</style>
+<script>
+  import { enhanceZombies } from "../../scripts/zombies";
+  document.querySelectorAll<HTMLElement>("[data-zombies]").forEach((el) => enhanceZombies(el));
+</script>

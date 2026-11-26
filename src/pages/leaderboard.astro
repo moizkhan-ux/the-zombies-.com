@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
+import GameLeaderboard from "../components/GameLeaderboard.astro";
 import { ranked } from "../data/students";
 import { initials } from "../lib/utils";
 
@@ -75,6 +76,11 @@ const rest = ranked.slice(3);
             </ol>
           )
         }
+      </div>
+    </section>
+    <section class="alt">
+      <div class="wrap">
+        <GameLeaderboard compact />
       </div>
     </section>
   </main>

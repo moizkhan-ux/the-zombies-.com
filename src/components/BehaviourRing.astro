@@ -1,0 +1,19 @@
+---
+import { RING } from "../lib/student-ui";
+
+interface Props {
+  overall: number;
+  rating: string;
+}
+const { overall, rating } = Astro.props;
+const offset = RING * (1 - overall / 100);
+---
+
+<div class="z-ring" style={`--ring:${RING};--off:${offset}`}>
+  <svg viewBox="0 0 88 88" width="88" height="88" aria-hidden="true">
+    <circle class="z-track" cx="44" cy="44" r="38"></circle>
+    <circle class="z-val" cx="44" cy="44" r="38"></circle>
+  </svg>
+  <strong>{overall}%</strong>
+  <span class:list={["z-rate", rating.replace(/\s+/g, "-").toLowerCase()]}>{rating}</span>
+</div>
